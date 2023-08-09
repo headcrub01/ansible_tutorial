@@ -7,8 +7,10 @@
   - name: Update Repository index
     yum:
       update_cache: yes
+    when: ansible_distribution == "CentOS"
 
   - name: Install httpd package
     yum:
       name: httpd
       state: latest
+    when: ansible_distribution == "CentOS"
