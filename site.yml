@@ -20,6 +20,24 @@
 
 
 
+- hosts: workstations
+  become: true 
+  tasks:
+
+  - name: install unzip
+    package:
+      name: unzip
+
+  - name: install terrafofrm
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/1.5.5/terraform_1.5.5_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      mode: 0775
+      owner: root
+      group: root
+
+
 - hosts: web_servers
   become: true 
   tasks:
@@ -34,6 +52,7 @@
       update_cache: yes
     when: ansible_distribution == "Ubuntu"
 
+
   - name: install Apache and PHP for CentOS servers
     tags: apache,centos,httpd
     yum: 
@@ -43,6 +62,34 @@
       state: latest
       update_cache: yes
     when: ansible_distribution == "CentOS"
+
+
+  - name: start httpd (CentOS)
+    tags: apache,centos,httpd
+    service: 
+      name: httpd
+      state: started
+      enabled: yes
+    when: ansible_distribution == "CentOS"
+
+
+  - name: change e-mail address for admin
+    tags: apache,centos,httpd
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^ServerAdmin'
+      line: ServerAdmin somebody@somewhere.net
+    when: ansible_distribution == "CentOS"
+    register: httpd
+
+
+  - name: restart httpd (CentOS)
+    tags: apache,centos,httpd
+    service:
+      name: httpd
+      state: restarted
+    when: httpd.changed
+
 
   - name: copy default html file for site
     tags: apache,apache2,httpd
